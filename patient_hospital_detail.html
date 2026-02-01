@@ -1,0 +1,137 @@
+{% extends "layouts/dashboard_layout.html" %}
+{% block title %}{{ hospital.name }} - Details{% endblock %}
+{% block sidebar_links %}
+    {% set active_page = 'dashboard' %}
+    {% include 'layouts/_patient_sidebar.html' %}
+{% endblock %}
+{% block content %}
+<header class="mb-8 flex justify-between items-start">
+    <div>
+        <a href="{{ url_for('patient_dashboard', user_id=patient.id) }}" class="text-indigo-600 hover:underline text-sm mb-2 inline-block">&larr; Back to All Hospitals</a>
+        <h1 class="text-3xl font-bold text-slate-800">{{ hospital.name }}</h1>
+        <p class="text-slate-500 mt-1">{{ hospital.address }}</p>
+    </div>
+    <button class="btn-primary" onclick="openShareModal()">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block -mt-1 mr-2" viewBox="0 0 20 20" fill="currentColor"><path d="M15 8a3 3 0 10-2.977-2.63l-4.94 2.47a3 3 0 100 4.319l4.94 2.47a3 3 0 10.895-1.789l-4.94-2.47a3.027 3.027 0 000-.74l4.94-2.47C13.456 7.68 14.19 8 15 8z" /></svg>
+        Share Records
+    </button>
+</header>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    {% for category, message in messages %}
+      <div class="p-4 mb-4 text-sm rounded-lg {{ 'bg-green-100 text-green-800' if category == 'success' else 'bg-red-100 text-red-800' }}" role="alert">
+        <span class="font-medium">{{ message }}</span>
+      </div>
+    {% endfor %}
+  {% endif %}
+{% endwith %}
+
+<div class="bg-white p-6 rounded-2xl shadow-xl">
+    <h2 class="text-xl font-bold text-slate-700 mb-4">Your Medical Records</h2>
+    {% if records %}
+        {% for visit_id, recs in records.items() %}
+            <div class="mb-6">
+                <h3 class="font-semibold text-slate-800 mb-3">Visit on {{ visits | selectattr('id', 'equalto', visit_id) | first | attr('visit_timestamp') | string | slice(0, 10) }}</h3>
+                <div class="overflow-x-auto -mx-6 px-6">
+                    <div class="flex space-x-4 pb-4">
+                        {% for record in recs %}
+                        <div class="flex-shrink-0 w-60 bg-slate-50 rounded-lg p-4 card-hover group relative border">
+                            <a href="{{ url_for('view_file_route', record_id=record.id) }}" target="_blank" class="absolute inset-0 z-10 cursor-pointer"></a>
+                            <div class="flex justify-between items-start">
+                                <span class="text-xs font-semibold uppercase px-2 py-1 rounded-full bg-indigo-100 text-indigo-800">{{ record.category }}</span>
+                                <form action="{{ url_for('delete_record', record_id=record.id) }}" method="POST" onsubmit="return confirm('Are you sure you want to permanently delete this record?');" class="relative z-20">
+                                    <button type="submit" class="text-slate-400 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd" /></svg>
+                                    </button>
+                                </form>
+                            </div>
+                            <p class="font-bold text-slate-800 mt-3 truncate">{{ record.filename }}</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    {% else %}
+        <p class="text-slate-500 italic text-center w-full py-8">No medical records found for this hospital.</p>
+    {% endif %}
+</div>
+
+<!-- Share Modal -->
+<div id="shareModal" class="fixed inset-0 bg-black bg-opacity-60 hidden items-center justify-center transition-opacity duration-300 z-50">
+    <div class="bg-white p-8 rounded-2xl shadow-xl max-w-2xl w-full transform scale-95 transition-transform duration-300">
+        <h2 class="text-2xl font-bold text-slate-800 mb-4">Share Medical Records</h2>
+        <p class="text-slate-600 mb-6">Select the records you wish to share. A secure, time-limited link will be generated that you can give to any doctor. The link will automatically expire in 24 hours.</p>
+        <form id="shareForm">
+            <div class="max-h-64 overflow-y-auto space-y-2 border p-4 rounded-lg">
+                {% for visit_id, recs in records.items() %}
+                    {% for record in recs %}
+                    <label class="flex items-center p-2 rounded-md hover:bg-slate-50 cursor-pointer">
+                        <input type="checkbox" name="record_ids" value="{{ record.id }}" class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                        <span class="ml-3 text-sm font-medium text-slate-700">{{ record.filename }} ({{ record.category }})</span>
+                    </label>
+                    {% endfor %}
+                {% endfor %}
+            </div>
+        </form>
+        <div id="shareLinkContainer" class="hidden mt-4">
+            <label class="font-semibold text-sm">Your Secure Link:</label>
+            <div class="flex items-center space-x-2">
+                <input type="text" id="shareLink" class="input-field mt-1" readonly>
+                <button onclick="copyLink()" class="p-2 bg-slate-100 rounded-md hover:bg-slate-200"><svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.666 3.888A2.25 2.25 0 0013.5 2.25h-3c-1.03 0-1.9.693-2.166 1.638m7.332 0c.055.194.084.4.084.612v3.042m-7.332 0c-.055.194-.084.4-.084.612v3.042m7.332 0c.646.049 1.288.11 1.927.184 1.1.128 1.907 1.077 1.907 2.185V19.5a2.25 2.25 0 01-2.25 2.25H6.75A2.25 2.25 0 014.5 19.5V12.25c0-1.108.806-2.057 1.907-2.185a48.208 48.208 0 011.927-.184" /></svg></button>
+            </div>
+            <p id="copyFeedback" class="text-xs text-green-600 mt-1 h-4"></p>
+        </div>
+        <div class="flex justify-end space-x-4 pt-6 border-t mt-6">
+            <button type="button" class="font-semibold text-slate-600" onclick="closeShareModal()">Cancel</button>
+            <button type="button" class="btn-primary" onclick="generateShareLink()">Generate Link</button>
+        </div>
+    </div>
+</div>
+<script>
+    const shareModal = document.getElementById('shareModal');
+    const shareLinkContainer = document.getElementById('shareLinkContainer');
+    const shareLinkInput = document.getElementById('shareLink');
+    const copyFeedback = document.getElementById('copyFeedback');
+
+    function openShareModal() {
+        shareModal.style.display = 'flex';
+        setTimeout(() => { shareModal.firstElementChild.classList.remove('scale-95'); }, 10);
+    }
+    function closeShareModal() {
+        shareModal.firstElementChild.classList.add('scale-95');
+        setTimeout(() => { 
+            shareModal.style.display = 'none';
+            shareLinkContainer.style.display = 'none';
+            shareLinkInput.value = '';
+            copyFeedback.textContent = '';
+        }, 300);
+    }
+    function generateShareLink() {
+        const form = document.getElementById('shareForm');
+        const formData = new FormData(form);
+        if (formData.getAll('record_ids').length === 0) {
+            alert('Please select at least one record to share.');
+            return;
+        }
+
+        fetch("{{ url_for('generate_share_link', user_id=patient.id) }}", { method: 'POST', body: formData })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                shareLinkInput.value = data.link;
+                shareLinkContainer.style.display = 'block';
+            } else {
+                alert(data.message);
+            }
+        });
+    }
+    function copyLink() {
+        shareLinkInput.select();
+        document.execCommand('copy');
+        copyFeedback.textContent = 'Link copied to clipboard!';
+        setTimeout(() => { copyFeedback.textContent = ''; }, 2000);
+    }
+</script>
+{% endblock %}
