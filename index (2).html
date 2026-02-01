@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Medication & Dosage Entity
+Extraction from e-Prescriptions</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+<style>
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    font-family: 'Inter', sans-serif;
+    color: white;
+    overflow: hidden;
+}
+
+/* ---------- BACKGROUND VIDEO ---------- */
+.video-bg {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: -2;
+}
+
+.overlay {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 30, 60, 0.65);
+    z-index: -1;
+}
+
+/* ---------- HEADER ---------- */
+header {
+    padding: 30px 60px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+header h1 {
+    margin: 0;
+    font-size: 26px;
+}
+
+header span {
+    color: #4fc3f7;
+}
+
+/* ---------- MAIN CONTENT ---------- */
+.main {
+    height: calc(100vh - 120px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 20px;
+}
+
+.card {
+    background: rgba(255,255,255,0.1);
+    backdrop-filter: blur(14px);
+    border-radius: 20px;
+    padding: 60px;
+    max-width: 900px;
+    width: 100%;
+    animation: fadeUp 1s ease;
+}
+
+@keyframes fadeUp {
+    from { opacity: 0; transform: translateY(40px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.card h2 {
+    font-size: 42px;
+    margin-bottom: 15px;
+}
+
+.card p {
+    font-size: 18px;
+    opacity: 0.9;
+}
+
+/* ---------- BUTTONS ---------- */
+.buttons {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    margin-top: 40px;
+    flex-wrap: wrap;
+}
+
+.btn {
+    padding: 18px 40px;
+    font-size: 17px;
+    border-radius: 50px;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    min-width: 260px;
+}
+
+.btn-hospital {
+    background: linear-gradient(145deg, #00c6ff, #0072ff);
+    color: white;
+    box-shadow: 0 15px 40px rgba(0,198,255,0.4);
+}
+
+.btn-report {
+    background: linear-gradient(145deg, #4caf50, #2e7d32);
+    color: white;
+    box-shadow: 0 15px 40px rgba(76,175,80,0.4);
+}
+
+.btn:hover {
+    transform: translateY(-5px) scale(1.05);
+}
+
+.btn:active {
+    transform: scale(0.95);
+}
+
+/* ---------- FOOTER ---------- */
+footer {
+    position: absolute;
+    bottom: 20px;
+    width: 100%;
+    text-align: center;
+    font-size: 14px;
+    opacity: 0.8;
+}
+
+@media (max-width: 768px) {
+    .card h2 { font-size: 32px; }
+    .btn { min-width: 220px; }
+}
+</style>
+</head>
+
+<body>
+
+<!-- BACKGROUND VIDEO -->
+<video class="video-bg" autoplay muted loop>
+    <source src="C:\Users\basud\Downloads\7584599-uhd_4096_2160_25fps.mp4" type="video/mp4">
+</video>
+
+<div class="overlay"></div>
+
+<header>
+    <h1>🏥 <span>Medical Report Summarizer</span> AI</h1>
+    <div>Powered by AI & NLP</div>
+</header>
+
+<div class="main">
+    <div class="card">
+        <h2>Next-Generation Smart Healthcare</h2>
+        <p>
+            AI-powered hospital operations and intelligent medical report summarization
+            to improve efficiency, safety, and patient care.
+        </p>
+
+        <div class="buttons">
+            <button class="btn btn-hospital" onclick="location.href='/hospital'">
+                🏥 Smart Hospital Card
+            </button>
+
+            <button class="btn btn-report" onclick="location.href='/summarizer'">
+                📄 Medical Report Summarizer
+            </button>
+        </div>
+    </div>
+</div>
+
+<footer>
+    © 2026 Smart Hospital AI Platform | Academic & Healthcare Project
+</footer>
+
+</body>
+</html>
