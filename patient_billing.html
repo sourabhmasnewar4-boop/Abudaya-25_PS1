@@ -1,0 +1,38 @@
+{% extends "layouts/dashboard_layout.html" %}
+{% block title %}Billing{% endblock %}
+{% block sidebar_links %}
+    {% set active_page = 'billing' %}
+    {% include 'layouts/_patient_sidebar.html' %}
+{% endblock %}
+{% block content %}
+<header class="mb-8">
+    <h1 class="text-3xl font-bold text-slate-800">Billing History</h1>
+    <p class="text-slate-500 mt-1">A summary of all your medical bills.</p>
+</header>
+<div class="bg-white p-6 rounded-2xl shadow-md">
+    <table class="w-full text-left">
+        <thead class="bg-slate-50 text-slate-600 uppercase text-sm">
+            <tr>
+                <th class="p-4 rounded-l-lg">Bill Date</th>
+                <th class="p-4">Hospital</th>
+                <th class="p-4">Amount</th>
+                <th class="p-4">Status</th>
+                <th class="p-4 rounded-r-lg"></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for payment in payments %}
+            <tr class="border-b border-slate-100">
+                <td class="p-4 font-medium text-slate-800">{{ payment.bill_date }}</td>
+                <td class="p-4 text-slate-600">{{ payment.hospital_name }}</td>
+                <td class="p-4 text-slate-600">${{ "%.2f"|format(payment.total_amount) }}</td>
+                <td class="p-4"><span class="text-xs font-semibold uppercase px-2 py-1 rounded-full {{ 'bg-green-100 text-green-800' if payment.status == 'Paid' else 'bg-yellow-100 text-yellow-800' }}">{{ payment.status }}</span></td>
+                <td class="p-4 text-right"><a href="{{ url_for('patient_invoice_view', user_id=patient.id, payment_id=payment.id) }}" class="font-semibold text-indigo-600 hover:underline text-sm">View Invoice</a></td>
+            </tr>
+            {% else %}
+             <tr><td colspan="5" class="text-center py-10 text-slate-500 italic">No billing history found.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
