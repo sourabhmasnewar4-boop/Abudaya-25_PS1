@@ -1,0 +1,55 @@
+{% extends "layouts/dashboard_layout.html" %}
+{% block title %}Doctor Dashboard{% endblock %}
+{% block sidebar_links %}
+    {% set active_page = 'dashboard' %}
+    {% include 'layouts/_doctor_sidebar.html' %}
+{% endblock %}
+{% block content %}
+<header class="mb-8">
+    <h1 class="text-4xl font-extrabold text-slate-800">Patient Dashboard</h1>
+    <p class="text-slate-500 mt-2 text-lg">Viewing patients for {{ doctor.hospital_name }}.</p>
+</header>
+
+<div class="bg-white p-6 rounded-2xl shadow-xl">
+    <div class="flex justify-between items-center mb-4 border-b pb-4">
+        <h2 class="text-xl font-bold text-slate-700">Your Patients</h2>
+        <div class="relative">
+            <input type="text" id="patientSearch" placeholder="Search by name..." class="input-field pl-10 w-64">
+            <svg class="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" /></svg>
+        </div>
+    </div>
+    <div id="patient-card-container" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+        {% for patient in patients %}
+        <a href="{{ url_for('doctor_patient_view', user_id=doctor.id, patient_id=patient.id) }}" class="patient-card card-hover bg-slate-50 p-5 rounded-xl border border-slate-200 text-center group">
+            <div class="patient-name font-bold text-slate-800 group-hover:text-indigo-600 transition-colors">{{ patient.first_name }} {{ patient.last_name }}</div>
+            <div class="text-sm text-slate-500 mt-1">Last visit: {{ patient.last_visit.split(' ')[0] }}</div>
+        </a>
+        {% else %}
+        <p id="no-patients-msg" class="text-slate-500 italic text-center col-span-full py-8">No patients have visited this hospital yet.</p>
+        {% endfor %}
+    </div>
+    <p id="no-results-msg" class="text-slate-500 italic text-center col-span-full py-8 hidden">No patients match your search.</p>
+</div>
+<script>
+    const searchInput = document.getElementById('patientSearch');
+    const patientCards = document.querySelectorAll('.patient-card');
+    const noResultsMsg = document.getElementById('no-results-msg');
+    const noPatientsMsg = document.getElementById('no-patients-msg');
+
+    searchInput.addEventListener('keyup', (e) => {
+        const query = e.target.value.toLowerCase();
+        let visibleCount = 0;
+        patientCards.forEach(card => {
+            const name = card.querySelector('.patient-name').textContent.toLowerCase();
+            if (name.includes(query)) {
+                card.style.display = 'block';
+                visibleCount++;
+            } else {
+                card.style.display = 'none';
+            }
+        });
+        noResultsMsg.style.display = (visibleCount === 0 && patientCards.length > 0) ? 'block' : 'none';
+        if(noPatientsMsg) noPatientsMsg.style.display = (visibleCount > 0) ? 'none' : 'block';
+    });
+</script>
+{% endblock %}
