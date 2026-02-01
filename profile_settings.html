@@ -1,0 +1,120 @@
+{% extends "layouts/dashboard_layout.html" %}
+
+{% block title %}Profile & Settings{% endblock %}
+
+{% block sidebar_links %}
+    {% set active_page = 'profile_settings' %}
+    {% include 'layouts/_patient_sidebar.html' %}
+{% endblock %}
+
+{% block content %}
+<header class="mb-8">
+    <h1 class="text-3xl font-bold text-slate-800">Profile & Settings</h1>
+    <p class="text-slate-500 mt-1">Manage your account details and link your RFID card.</p>
+</header>
+
+<div class="bg-white p-6 sm:p-8 rounded-2xl shadow-lg max-w-2xl mx-auto">
+    <h2 class="text-xl font-semibold text-slate-700 mb-6 border-b pb-4">Your Information</h2>
+    
+    <div class="space-y-4 mb-8">
+        <div class="grid grid-cols-3 items-center">
+            <span class="font-medium text-slate-500">Full Name</span>
+            <span class="col-span-2 text-slate-800">{{ patient.first_name }} {{ patient.last_name }}</span>
+        </div>
+        <div class="grid grid-cols-3 items-center">
+            <span class="font-medium text-slate-500">Email</span>
+            <span class="col-span-2 text-slate-800">{{ patient.email }}</span>
+        </div>
+        <div class="grid grid-cols-3 items-center">
+            <span class="font-medium text-slate-500">Username</span>
+            <span class="col-span-2 text-slate-800">{{ patient.username }}</span>
+        </div>
+    </div>
+
+    <h2 class="text-xl font-semibold text-slate-700 mb-4 border-b pb-4">RFID Card</h2>
+    
+    <div id="card-linking-section" class="bg-slate-50 p-6 rounded-lg">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="font-medium text-slate-800">Card Status</p>
+                <p id="card-status-text" class="text-sm {{ 'text-green-600' if patient.uid else 'text-orange-600' }}">
+                    {% if patient.uid %}
+                    Card Linked (ID: <code class="bg-slate-200 text-slate-700 rounded px-1.5 py-0.5">{{ patient.uid }}</code>)
+                    {% else %}
+                    No Card Linked
+                    {% endif %}
+                </p>
+            </div>
+            {% if not patient.uid %}
+            <button id="link-card-btn" class="bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-indigo-700 transition-colors">
+                Link New Card
+            </button>
+            {% endif %}
+        </div>
+        <div id="scanner-info" class="text-center mt-4 hidden">
+            <p class="text-indigo-600 font-semibold animate-pulse">Waiting for card scan...</p>
+            <p class="text-sm text-slate-500 mt-1">Please scan your RFID card on the reader now.</p>
+        </div>
+        <div id="message-box" class="text-center mt-4 font-semibold hidden"></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const linkCardBtn = document.getElementById('link-card-btn');
+    const scannerInfo = document.getElementById('scanner-info');
+    const messageBox = document.getElementById('message-box');
+    const cardStatusText = document.getElementById('card-status-text');
+
+    if (linkCardBtn) {
+        linkCardBtn.addEventListener('click', () => {
+            scannerInfo.classList.remove('hidden');
+            messageBox.classList.add('hidden');
+            linkCardBtn.disabled = true;
+            linkCardBtn.textContent = 'Scanning...';
+            linkCardBtn.classList.add('opacity-50', 'cursor-not-allowed');
+        });
+    }
+
+    const socket = io();
+    socket.on('connect', () => console.log('Connected to server for card linking!'));
+
+    // Listen for a card scan from the backend
+    socket.on('card_scanned_for_linking', (data) => {
+        // Only proceed if the user has clicked the "Link New Card" button
+        if (linkCardBtn && linkCardBtn.disabled) {
+            console.log('Card scanned for linking:', data.uid);
+            scannerInfo.classList.add('hidden');
+            
+            // Tell the server to link this UID to the current patient
+            socket.emit('link_card_to_user', {
+                uid: data.uid,
+                user_id: {{ patient.id }}
+            });
+        }
+    });
+
+    // Listen for the result of the linking attempt
+    socket.on('card_link_result', (data) => {
+        messageBox.classList.remove('hidden');
+        if (data.success) {
+            messageBox.textContent = data.message;
+            messageBox.className = 'text-center mt-4 font-semibold text-green-600';
+            cardStatusText.innerHTML = `Card Linked (ID: <code class="bg-slate-200 text-slate-700 rounded px-1.5 py-0.5">${data.uid}</code>)`;
+            cardStatusText.className = 'text-sm text-green-600';
+            if(linkCardBtn) linkCardBtn.remove();
+        } else {
+            messageBox.textContent = data.message;
+            messageBox.className = 'text-center mt-4 font-semibold text-red-600';
+            // Re-enable the button to allow another try
+            if (linkCardBtn) {
+                linkCardBtn.disabled = false;
+                linkCardBtn.textContent = 'Link New Card';
+                linkCardBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+        }
+    });
+</script>
+{% endblock %}
+
