@@ -1,0 +1,61 @@
+{% extends "layouts/dashboard_layout.html" %}
+{% block title %}Settings & Scanners{% endblock %}
+{% block sidebar_links %}
+    {% set active_page = 'settings' %}
+    {% include 'layouts/_doctor_sidebar.html' %}
+{% endblock %}
+{% block content %}
+<header class="mb-8">
+    <h1 class="text-3xl font-bold text-slate-800">Settings & Scanners</h1>
+</header>
+
+<!-- Flash Messages for Order Status and Activation -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    {% for category, message in messages %}
+      <div class="p-4 mb-4 text-sm rounded-lg 
+        {% if category == 'success' %}bg-green-100 text-green-800
+        {% elif category == 'error' %}bg-red-100 text-red-800
+        {% else %}bg-blue-100 text-blue-800{% endif %}"
+       role="alert">
+        <span class="font-medium">{{ message }}</span>
+      </div>
+    {% endfor %}
+  {% endif %}
+{% endwith %}
+
+<div class="bg-white p-8 rounded-2xl shadow-md">
+    <h2 class="text-xl font-semibold text-slate-700 mb-6 border-b pb-4">Scanner Management</h2>
+    <div class="space-y-3 mb-6">
+        {% for scanner in scanners %}
+        <div class="bg-slate-50 p-3 rounded-lg flex justify-between items-center">
+            <div>
+                <p class="font-medium text-slate-800">{{ scanner.name }}</p>
+                <code class="text-xs text-slate-500">{{ scanner.activation_code }}</code>
+            </div>
+            <span class="text-xs font-semibold uppercase px-2 py-1 rounded-full {{ 'bg-green-100 text-green-800' if scanner.status == 'Active' else 'bg-yellow-100 text-yellow-800' }}">{{ scanner.status }}</span>
+        </div>
+        {% else %}
+        <p class="italic text-slate-500">No scanners have been provisioned for this hospital yet.</p>
+        {% endfor %}
+    </div>
+    <form action="{{ url_for('activate_scanner', user_id=doctor.id) }}" method="POST" class="border-t pt-6 space-y-4">
+        <h3 class="text-lg font-semibold text-slate-700">Activate a New Scanner</h3>
+        <input type="hidden" name="hospital_id" value="{{ doctor.hospital_id }}">
+        <div>
+            <label for="activation_code" class="block text-sm font-medium text-slate-600">Scanner Activation Code</label>
+            <input type="text" name="activation_code" class="mt-1 input-field" placeholder="Enter code from scanner box" required>
+        </div>
+        <div class="flex justify-end">
+            <button type="submit" class="btn-primary">Activate Scanner</button>
+        </div>
+    </form>
+    <div class="border-t pt-6 mt-6">
+        <form action="{{ url_for('order_scanner', user_id=doctor.id) }}" method="POST">
+             <button type="submit" class="w-full text-center p-3 bg-slate-100 hover:bg-slate-200 rounded-lg font-semibold text-slate-700 transition disabled:opacity-50 disabled:cursor-not-allowed" {{ 'disabled' if order_pending }}>
+                {{ 'Order Pending Fulfillment' if order_pending else 'Order Additional Scanners' }}
+             </button>
+        </form>
+    </div>
+</div>
+{% endblock %}
