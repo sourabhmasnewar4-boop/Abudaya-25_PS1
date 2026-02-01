@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register Account</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style> 
+        body { font-family: 'Inter', sans-serif; }
+        .input-field { padding: 0.5rem 0.75rem; border: 1px solid #d1d5db; border-radius: 0.5rem; width: 100%; transition: all 0.2s; }
+        .input-field:focus { outline: none; box-shadow: 0 0 0 3px #a5b4fc; border-color: #6366f1; }
+        .btn-primary { padding: 0.75rem 1rem; background-image: linear-gradient(to right, #4f46e5, #6366f1); color: white; font-weight: 600; border-radius: 0.5rem; transition: all 0.3s; border: none; cursor: pointer; }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 10px rgb(0 0 0 / 0.1); }
+    </style>
+</head>
+<body class="bg-slate-100">
+<div class="container mx-auto p-4 sm:p-6 lg:p-8 min-h-screen flex items-center justify-center">
+    <div class="max-w-3xl w-full bg-white p-8 rounded-2xl shadow-xl">
+        <h1 class="text-3xl font-extrabold text-slate-800">Create Your MedScan Account</h1>
+        <p class="text-slate-500 mb-6" id="subtitle">Your personalized RFID card will be shipped to you.</p>
+        
+        <form id="registrationForm" class="space-y-6">
+            <div>
+                <h2 class="text-lg font-semibold text-slate-800 mb-4">I am a...</h2>
+                <div class="flex items-center space-x-6">
+                    <label class="flex items-center cursor-pointer"><input type="radio" name="role" value="patient" class="h-4 w-4 text-indigo-600" checked onchange="toggleForm(event)"><span class="ml-2 text-sm text-slate-700">Patient</span></label>
+                    <label class="flex items-center cursor-pointer"><input type="radio" name="role" value="doctor" class="h-4 w-4 text-indigo-600" onchange="toggleForm(event)"><span class="ml-2 text-sm text-slate-700">Doctor</span></label>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6 border-t">
+                <div><label class="block text-sm font-medium text-slate-600">First Name</label><input type="text" name="first_name" class="mt-1 input-field" required></div>
+                <div><label class="block text-sm font-medium text-slate-600">Last Name</label><input type="text" name="last_name" class="mt-1 input-field" required></div>
+                <div><label class="block text-sm font-medium text-slate-600">Email Address</label><input type="email" name="email" class="mt-1 input-field" required></div>
+                <div><label class="block text-sm font-medium text-slate-600">Username</label><input type="text" name="username" class="mt-1 input-field" required></div>
+                <div class="md:col-span-2"><label class="block text-sm font-medium text-slate-600">Password</label><input type="password" name="password" class="mt-1 input-field" required></div>
+            </div>
+
+            <div id="patient-fields">
+                <label for="shipping_address" class="block text-sm font-medium text-slate-600">Shipping Address</label>
+                <input type="text" name="shipping_address" id="shipping_address" class="mt-1 input-field" placeholder="Address for card delivery" required>
+            </div>
+
+            <div id="doctor-fields" class="hidden space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div><label class="block text-sm font-medium text-slate-600">Specialization</label><input type="text" name="specialization" class="mt-1 input-field"></div>
+                    <div><label class="block text-sm font-medium text-slate-600">Degree(s)</label><input type="text" name="degree" class="mt-1 input-field"></div>
+                </div>
+                <div><label class="block text-sm font-medium text-slate-600">Office / Floor No.</label><input type="text" name="office_floor" class="mt-1 input-field"></div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-600">Hospital / Clinic</label>
+                    <select name="hospital_id" id="hospital_id" class="mt-1 input-field" onchange="toggleNewHospital(this)">
+                        <option value="" disabled selected>Select your hospital</option>
+                        {% for h in hospitals %}<option value="{{ h.id }}">{{ h.name }}</option>{% endfor %}
+                        <option value="new">-- Register a new hospital --</option>
+                    </select>
+                </div>
+                <div id="new-hospital-fields" class="hidden space-y-4">
+                    <input type="text" name="new_hospital_name" placeholder="New Hospital Name" class="input-field">
+                    <input type="text" name="new_hospital_address" placeholder="New Hospital Address" class="input-field">
+                </div>
+                 <div class="flex items-center pt-4 border-t"><input id="order_scanner" name="order_scanner" type="checkbox" class="h-4 w-4 text-indigo-600 rounded"><label for="order_scanner" class="ml-2 block text-sm">Order a MedScan RFID Scanner for the hospital.</label></div>
+            </div>
+            
+            <p id="error-message-reg" class="text-red-500 text-sm hidden"></p>
+            <button type="submit" class="w-full btn-primary py-3">Register Account</button>
+        </form>
+        <div class="text-center mt-4"><a href="{{ url_for('index') }}" class="font-bold text-sm text-indigo-500 hover:text-indigo-700">Already have an account? Login</a></div>
+    </div>
+</div>
+<script>
+    const patientFields = document.getElementById('patient-fields');
+    const doctorFields = document.getElementById('doctor-fields');
+    const subtitle = document.getElementById('subtitle');
+    const allDoctorInputs = doctorFields.querySelectorAll('input, select');
+    const shippingAddressInput = document.getElementById('shipping_address');
+    
+    function toggleForm(event) {
+        const isPatient = event.target.value === 'patient';
+        patientFields.style.display = isPatient ? 'block' : 'none';
+        doctorFields.style.display = isPatient ? 'none' : 'block';
+        subtitle.textContent = isPatient ? 'Your personalized RFID card will be shipped to you.' : 'Manage your hospital and patient records.';
+        shippingAddressInput.required = isPatient;
+        allDoctorInputs.forEach(input => input.required = !isPatient);
+        toggleNewHospital(document.getElementById('hospital_id'));
+    }
+    function toggleNewHospital(select) {
+        const newHospitalFields = document.getElementById('new-hospital-fields');
+        const isNew = select.value === 'new';
+        newHospitalFields.style.display = isNew ? 'block' : 'none';
+        newHospitalFields.querySelectorAll('input').forEach(input => input.required = isNew && !patientFields.style.display);
+    }
+    document.addEventListener('DOMContentLoaded', () => toggleForm({target: {value: 'patient'}}));
+    document.getElementById('registrationForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const msg = document.getElementById('error-message-reg');
+        msg.classList.add('hidden');
+        fetch("{{ url_for('register') }}", { method: 'POST', body: new FormData(this) })
+        .then(res => res.json()).then(data => {
+            if (data.success) {
+                alert('Registration successful! Please log in.');
+                window.location.href = data.login_url;
+            } else {
+                msg.textContent = data.message || 'An error occurred.';
+                msg.classList.remove('hidden');
+            }
+        });
+    });
+</script>
+</body>
+</html>
