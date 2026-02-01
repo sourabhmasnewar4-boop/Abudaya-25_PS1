@@ -1,0 +1,225 @@
+{% extends "layouts/dashboard_layout.html" %}
+{% block title %}Patient Details{% endblock %}
+{% block sidebar_links %}
+    {% set active_page = 'dashboard' %}
+    {% include 'layouts/_doctor_sidebar.html' %}
+{% endblock %}
+{% block content %}
+<header class="mb-8 flex justify-between items-center">
+    <div>
+        <a href="{{ url_for('doctor_dashboard', user_id=doctor.id) }}" class="text-indigo-600 hover:underline text-sm mb-2 inline-block">&larr; Back to Patient List</a>
+        <h1 class="text-3xl font-bold text-slate-800">{{ patient.first_name }} {{ patient.last_name }}</h1>
+        <p class="text-slate-500 mt-1">Viewing all visits at {{ doctor.hospital_name }}.</p>
+    </div>
+    <button class="btn-primary" onclick="openAppointmentModal()">
+        <svg class="h-5 w-5 inline-block -mt-1 mr-2" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5m-9-6h.008v.008H12v-.008z" /></svg>
+        Schedule Follow-up
+    </button>
+</header>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    {% for category, message in messages %}
+      <div class="p-4 mb-4 text-sm rounded-lg {{ 'bg-green-100 text-green-800' if category == 'success' else 'bg-red-100 text-red-800' }}" role="alert">
+        <span class="font-medium">{{ message }}</span>
+      </div>
+    {% endfor %}
+  {% endif %}
+{% endwith %}
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <div class="lg:col-span-2">
+        <div class="bg-white p-6 rounded-2xl shadow-xl">
+            <!-- Tabs -->
+            <div class="border-b border-slate-200">
+                <nav class="-mb-px flex space-x-8" id="tabs">
+                    <button data-tab="visits" class="tab-btn active-tab whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">Visits & Records</button>
+                    <button data-tab="billing" class="tab-btn inactive-tab whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">Billing</button>
+                </nav>
+            </div>
+
+            <!-- Tab Content -->
+            <div id="tab-content" class="pt-6">
+                <!-- Visits & Records -->
+                <div id="visits-content" class="tab-panel space-y-6">
+                    {% if visits %}
+                        {% for visit in visits %}
+                        <div class="bg-slate-50 p-4 rounded-lg border border-slate-200">
+                            <h3 class="font-semibold text-slate-800">Visit on {{ visit.visit_timestamp.split(' ')[0] }}</h3>
+                            <div class="overflow-x-auto -mx-4 px-4 mt-3 pt-3 border-t">
+                                <div class="flex space-x-4 pb-2">
+                                     {% for record in records[visit.id] %}
+                                     <a href="{{ url_for('view_file_route', record_id=record.id) }}" target="_blank" class="flex-shrink-0 w-52 bg-white rounded-lg p-3 card-hover group relative border">
+                                        <span class="text-xs font-semibold uppercase px-2 py-1 rounded-full bg-indigo-100 text-indigo-800">{{ record.category }}</span>
+                                        <p class="font-bold text-slate-800 mt-3 truncate">{{ record.filename }}</p>
+                                    </a>
+                                     {% else %}
+                                     <p class="text-sm text-slate-500 italic">No records for this visit.</p>
+                                     {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-slate-500 italic text-center py-8">This patient has no visit records at your hospital yet.</p>
+                    {% endif %}
+                </div>
+                <!-- Billing -->
+                <div id="billing-content" class="tab-panel hidden">
+                     <table class="w-full text-left">
+                        <thead class="bg-slate-50 text-slate-600 uppercase text-sm">
+                            <tr><th class="p-3 rounded-l-lg">Date</th><th class="p-3">Total</th><th class="p-3">Status</th><th class="p-3 rounded-r-lg"></th></tr>
+                        </thead>
+                        <tbody>
+                        {% for payment in payments %}
+                            <tr class="border-b">
+                                <td class="p-3">{{ payment.visit_timestamp.split(' ')[0] }}</td>
+                                <td class="p-3">${{ "%.2f"|format(payment.total_amount) }}</td>
+                                <td class="p-3"><span class="text-xs font-semibold px-2 py-1 rounded-full {{ 'bg-green-100 text-green-800' if payment.status == 'Paid' else 'bg-yellow-100 text-yellow-800' }}">{{ payment.status }}</span></td>
+                                <td class="p-3 text-right">
+                                {% if payment.status == 'Due' %}
+                                    <form action="{{ url_for('mark_paid', user_id=doctor.id) }}" method="POST" class="inline">
+                                        <input type="hidden" name="payment_id" value="{{ payment.id }}">
+                                        <input type="hidden" name="patient_id" value="{{ patient.id }}">
+                                        <button type="submit" class="text-xs font-semibold text-green-600 hover:underline">Mark as Paid</button>
+                                    </form>
+                                {% endif %}
+                                </td>
+                            </tr>
+                        {% else %}
+                        <tr><td colspan="4" class="text-center py-10 text-slate-500 italic">No invoices created for this patient.</td></tr>
+                        {% endfor %}
+                        </tbody>
+                     </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="lg:col-span-1">
+        <div class="space-y-6 sticky top-8">
+            <div class="bg-white p-6 rounded-2xl shadow-xl">
+                <h3 class="text-lg font-bold text-slate-700 mb-4">Upload New Record</h3>
+                <form action="{{ url_for('upload_record', user_id=doctor.id) }}" method="POST" enctype="multipart/form-data" class="space-y-4">
+                    <input type="hidden" name="patient_id" value="{{ patient.id }}">
+                    <div>
+                        <label class="block text-sm font-medium">For Visit On:</label>
+                        <select name="visit_id" class="mt-1 input-field" required>
+                            <option value="" disabled selected>Select a visit</option>
+                            {% for visit in visits %}<option value="{{ visit.id }}">{{ visit.visit_timestamp.split(' ')[0] }}</option>{% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium">Category:</label>
+                        <select name="category" class="mt-1 input-field" required>
+                            <option>Prescription</option><option>Lab Report</option><option>Imaging</option><option>Note</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium">File:</label>
+                        <input type="file" name="file" class="mt-1 block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100" required>
+                    </div>
+                    <button type="submit" class="btn-primary w-full">Upload File</button>
+                </form>
+            </div>
+            
+            <div class="bg-white p-6 rounded-2xl shadow-xl">
+                <h3 class="text-lg font-bold text-slate-700 mb-4">Manage Invoice</h3>
+                 <select id="invoice_visit_select" class="input-field" onchange="updateInvoiceButton(this.value)">
+                    <option value="" disabled selected>Select a visit to bill...</option>
+                    {% for visit in visits %}{% if not visit.payment_id %}<option value="{{ visit.id }}">{{ visit.visit_timestamp.split(' ')[0] }}</option>{% endif %}{% endfor %}
+                </select>
+                <button id="invoiceBtn" class="btn-primary w-full mt-3 disabled:opacity-50 disabled:cursor-not-allowed" onclick="openInvoiceModal()" disabled>Create Invoice for Selected Visit</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Invoice Modal -->
+<div id="invoiceModal" class="fixed inset-0 bg-black bg-opacity-60 hidden items-center justify-center transition-opacity duration-300 z-50">
+    <div class="bg-white p-8 rounded-2xl shadow-xl max-w-2xl w-full transform scale-95 transition-transform duration-300">
+        <h2 class="text-2xl font-bold text-slate-800 mb-4">Create Invoice</h2>
+        <form action="{{ url_for('create_invoice', user_id=doctor.id) }}" method="POST">
+            <input type="hidden" name="patient_id" value="{{ patient.id }}">
+            <input type="hidden" name="visit_id" id="modal_visit_id">
+            <div id="invoice-items" class="space-y-2 max-h-60 overflow-y-auto pr-2">
+                <div class="flex space-x-2"><input type="text" name="description[]" class="input-field w-3/4" placeholder="Procedure or Service" required><input type="number" step="0.01" name="amount[]" class="input-field w-1/4" placeholder="Cost" required></div>
+            </div>
+            <button type="button" onclick="addInvoiceItem()" class="text-sm font-semibold text-indigo-600 hover:underline mt-2">Add Item</button>
+            <div class="flex justify-end space-x-4 pt-6 border-t mt-6">
+                <button type="button" class="font-semibold text-slate-600" onclick="closeInvoiceModal()">Cancel</button>
+                <button type="submit" class="btn-primary">Generate & Send Invoice</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Appointment Modal -->
+<div id="appointmentModal" class="fixed inset-0 bg-black bg-opacity-60 hidden items-center justify-center transition-opacity duration-300 z-50">
+    <div class="bg-white p-8 rounded-2xl shadow-xl max-w-md w-full transform scale-95 transition-transform duration-300">
+        <h2 class="text-2xl font-bold text-slate-800 mb-4">Schedule Follow-up</h2>
+        <form action="{{ url_for('schedule_appointment', user_id=doctor.id) }}" method="POST" class="space-y-4">
+            <input type="hidden" name="patient_id" value="{{ patient.id }}">
+            <div>
+                <label class="block text-sm font-medium">Date & Time:</label>
+                <input type="datetime-local" name="appointment_datetime" class="input-field mt-1" required>
+            </div>
+            <div class="flex justify-end space-x-4 pt-4">
+                <button type="button" class="font-semibold text-slate-600" onclick="closeAppointmentModal()">Cancel</button>
+                <button type="submit" class="btn-primary">Set Appointment</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    document.querySelectorAll('.tab-btn').forEach(button => {
+        button.addEventListener('click', () => {
+            const tabName = button.dataset.tab;
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active-tab'); btn.classList.add('inactive-tab');
+            });
+            button.classList.add('active-tab'); button.classList.remove('inactive-tab');
+            document.querySelectorAll('.tab-panel').forEach(panel => {
+                panel.style.display = panel.id === tabName + '-content' ? 'block' : 'none';
+            });
+        });
+    });
+    const invoiceModal = document.getElementById('invoiceModal');
+    function openInvoiceModal() {
+        const visitId = document.getElementById('invoice_visit_select').value;
+        if (!visitId) return;
+        document.getElementById('modal_visit_id').value = visitId;
+        invoiceModal.style.display = 'flex';
+        setTimeout(() => { invoiceModal.firstElementChild.classList.remove('scale-95'); }, 10);
+    }
+    function closeInvoiceModal() {
+        invoiceModal.firstElementChild.classList.add('scale-95');
+        setTimeout(() => { invoiceModal.style.display = 'none'; }, 300);
+    }
+    function addInvoiceItem() {
+        const div = document.createElement('div');
+        div.className = 'flex space-x-2';
+        div.innerHTML = '<input type="text" name="description[]" class="input-field w-3/4" placeholder="Procedure or Service"><button type="button" class="text-red-500 hover:text-red-700" onclick="this.parentElement.remove()">X</button><input type="number" step="0.01" name="amount[]" class="input-field w-1/4" placeholder="Cost">';
+        document.getElementById('invoice-items').appendChild(div);
+    }
+    function updateInvoiceButton(visitId) {
+        document.getElementById('invoiceBtn').disabled = !visitId;
+    }
+    
+    const appointmentModal = document.getElementById('appointmentModal');
+    function openAppointmentModal() {
+        appointmentModal.style.display = 'flex';
+        setTimeout(() => { appointmentModal.firstElementChild.classList.remove('scale-95'); }, 10);
+    }
+    function closeAppointmentModal() {
+        appointmentModal.firstElementChild.classList.add('scale-95');
+        setTimeout(() => { appointmentModal.style.display = 'none'; }, 300);
+    }
+</script>
+<style>
+    .active-tab { border-color: #4f46e5; color: #4f46e5; }
+    .inactive-tab { border-color: transparent; color: #64748b; }
+    .inactive-tab:hover { border-color: #cbd5e1; color: #334155; }
+</style>
+{% endblock %}
