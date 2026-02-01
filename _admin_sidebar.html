@@ -1,0 +1,14 @@
+<a href="{{ url_for('admin_dashboard', user_id=admin.id) }}" class="sidebar-link flex items-center w-full px-4 py-2.5 rounded-lg font-semibold text-slate-600 {% if active_page == 'dashboard' %}active{% endif %} group">
+    <svg class="h-5 w-5 mr-3 text-slate-500" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" /></svg>
+    Fulfillment
+</a>
+{% if admin.is_superadmin %}
+<a href="{{ url_for('manage_admins', user_id=admin.id) }}" class="sidebar-link flex items-center w-full px-4 py-2.5 rounded-lg font-semibold text-slate-600 {% if active_page == 'users' %}active{% endif %} group">
+    <svg class="h-5 w-5 mr-3 text-slate-500" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-4.684v-.571c0-1.817.025-3.581.046-5.287a6.75 6.75 0 011.029-4.502.75.75 0 01.75-.234a6.75 6.75 0 015.11 4.502c.021 1.706.046 3.47.046 5.287v.571a6.375 6.375 0 01-3.692 5.572.75.75 0 01-.837-.49l-.003-.005a6.375 6.375 0 01-4.04-5.572" /></svg>
+    Manage Admins
+</a>
+<a href="{{ url_for('admin_audit_log', user_id=admin.id) }}" class="sidebar-link flex items-center w-full px-4 py-2.5 rounded-lg font-semibold text-slate-600 {% if active_page == 'history' %}active{% endif %} group">
+    <svg class="h-5 w-5 mr-3 text-slate-500" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" /></svg>
+    History
+</a>
+{% endif %}
