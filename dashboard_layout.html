@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}MedScan Dashboard{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .sidebar-link { transition: all 0.2s; }
+        .sidebar-link:hover, .sidebar-link.active { 
+            background-color: #4f46e5; 
+            color: white;
+            transform: translateX(4px);
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        }
+        .sidebar-link.active svg { color: white; }
+        .btn-primary { padding: 0.6rem 1.2rem; background-image: linear-gradient(to right, #4f46e5, #6366f1); color: white; font-weight: 600; border-radius: 0.5rem; transition: all 0.3s; border: none; cursor: pointer; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -2px rgb(0 0 0 / 0.1); }
+        .input-field { padding: 0.5rem 0.75rem; border: 1px solid #d1d5db; border-radius: 0.5rem; width: 100%; transition: all 0.2s; }
+        .input-field:focus { outline: none; box-shadow: 0 0 0 3px #a5b4fc; border-color: #6366f1; }
+        .card-hover { transition: all 0.3s ease-in-out; }
+        .card-hover:hover { transform: translateY(-4px); box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1); }
+    </style>
+</head>
+<body class="bg-slate-50">
+    <div class="flex h-screen bg-slate-50">
+        <aside class="w-64 flex-shrink-0 bg-white border-r border-slate-200 flex flex-col">
+            <div class="h-20 flex items-center justify-center border-b border-slate-200 bg-gradient-to-r from-violet-50 to-indigo-50">
+                <div class="flex items-center space-x-2">
+                    <svg class="h-8 w-8 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M7.5 14.25v2.25m3-4.5v4.5m3-6.75v6.75m3-9v9M6 20.25h12A2.25 2.25 0 0020.25 18V6A2.25 2.25 0 0018 3.75H6A2.25 2.25 0 003.75 6v12A2.25 2.25 0 006 20.25z" /></svg>
+                    <span class="text-2xl font-extrabold text-slate-800">MedScan</span>
+                </div>
+            </div>
+            <nav class="flex-1 px-4 py-4 space-y-2">
+                {% block sidebar_links %}{% endblock %}
+            </nav>
+            <div class="px-4 py-4 border-t border-slate-200">
+                <a href="{{ url_for('index') }}" class="sidebar-link flex items-center w-full px-4 py-2.5 rounded-lg text-slate-600 hover:bg-red-500 hover:text-white group">
+                    <svg class="h-5 w-5 mr-3 text-slate-500 group-hover:text-white" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" /></svg>
+                    Logout
+                </a>
+            </div>
+        </aside>
+        <main class="flex-1 overflow-y-auto">
+            <div class="p-4 sm:p-6 lg:p-8">
+                {% block content %}{% endblock %}
+            </div>
+        </main>
+    </div>
+    {% block scripts %}{% endblock %}
+</body>
+</html>
